@@ -1,0 +1,39 @@
+name: Tracker Worker Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      webhook_secret:
+        description: Existing repository Discord webhook secret name
+        required: true
+        default: DISCORD_WEBHOOK_SHARED
+        type: string
+      thread_id:
+        description: Optional Discord thread ID
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout worker repository
+        uses: actions/checkout@v4
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test worker and Discord connectivity only
+        env:
+          WORKER_ID: ${{ vars.WORKER_ID }}
+          MASTER_API_URL: ${{ secrets.MASTER_API_URL }}
+          MASTER_API_KEY: ${{ secrets.MASTER_API_KEY }}
+          TEST_WEBHOOK_SECRET: ${{ inputs.webhook_secret }}
+          TEST_THREAD_ID: ${{ inputs.thread_id }}
+          TEST_WEBHOOK_VALUE: ${{ secrets[inputs.webhook_secret] }}
+        run: python worker/smoke.py
