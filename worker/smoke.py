@@ -34,6 +34,7 @@ def _url(value, label):
 
 def _request(method, url, headers, payload=None):
     data = None if payload is None else json.dumps(payload).encode()
+    headers = {"User-Agent": "TrackerWorker/1.0", **headers}
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with OPEN(req, timeout=20) as response:
