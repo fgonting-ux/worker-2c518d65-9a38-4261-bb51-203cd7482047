@@ -1,0 +1,39 @@
+name: GitHub Repository Tracker Worker
+
+on:
+  schedule:
+    # Worker 1: 00:00 & 12:00 UTC (07:00 & 19:00 WIB)
+    # Untuk Worker 2, ubah menjadi: '0 6,18 * * *' (13:00 & 01:00 WIB)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tracker-worker-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout worker repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Tracker Engine
+        env:
+          WORKER_ID: ${{ vars.WORKER_ID || 'worker-1' }}
+          MASTER_API_URL: ${{ secrets.MASTER_API_URL }}
+          MASTER_API_KEY: ${{ secrets.MASTER_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_WEBHOOK_SHARED: ${{ secrets.DISCORD_WEBHOOK_SHARED }}
+          DISCORD_WEBHOOK_RELEASES: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
+        run: python tracker.py
